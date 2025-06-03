@@ -1,5 +1,5 @@
 import Foundation
-import FoundationNetworking
+import NetworkExtension
 
 public enum MediaType: String {
     case movie
