@@ -15,4 +15,16 @@ struct YoddWatchLibraryTests {
         let showURL = client.showStreamingURL(tmdbId: 2, season: 1, episode: 3)
         #expect(showURL.absoluteString == "https://vixsrc.to/tv/2/1/3")
     }
+
+    @Test func userPreferences() throws {
+        let prefs = UserPreferences.shared
+        prefs.favorites = []
+        prefs.addFavorite(id: 7)
+        #expect(prefs.favorites.contains(7))
+        prefs.addList(name: "watchlist")
+        prefs.add(7, toList: "watchlist")
+        #expect(prefs.lists["watchlist"]?.contains(7) == true)
+        prefs.setProgress(id: 7, minutes: 42)
+        #expect(prefs.progress(for: 7) == 42)
+    }
 }
