@@ -1,5 +1,5 @@
 import Foundation
-import FoundationNetworking
+import NetworkExtension
 
 public enum MediaType: String {
     case movie
@@ -57,7 +57,6 @@ public enum TMDBError: Error {
     case invalidResponse
     case httpError(Int)
     case decodeError
-}
 
 public class TMDBClient {
     private let apiKey: String
@@ -93,6 +92,7 @@ public class TMDBClient {
         } catch {
             throw TMDBError.decodeError
         }
+        return try JSONDecoder().decode(T.self, from: data)
     }
 
     public func searchMovies(query: String, language: String = "en") async throws -> [Movie] {

@@ -8,6 +8,7 @@ A lightweight framework providing access to The Movie Database API and basic use
 
 `UserPreferences` allows storing favorites, watched items, the preferred language (`en` or `it`), custom lists and playback progress.
 
+
 ## Topics
 
 ### API
