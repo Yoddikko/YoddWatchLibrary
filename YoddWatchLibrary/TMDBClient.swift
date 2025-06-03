@@ -57,18 +57,19 @@ public enum TMDBError: Error {
     case invalidResponse
     case httpError(Int)
     case decodeError
+}
 
 public class TMDBClient {
     private let apiKey: String
     private let baseURL = URL(string: "https://api.themoviedb.org/3")!
     private let imageBaseURL = URL(string: "https://image.tmdb.org/t/p")!
     private let cache = NSCache<NSURL, NSData>()
-
+    
     public init?(apiKey: String? = ProcessInfo.processInfo.environment["TMDB_API_KEY"]) {
         guard let key = apiKey else { return nil }
         self.apiKey = key
     }
-
+    
     private func request<T: Codable>(endpoint: String, queryItems: [URLQueryItem] = [], type: T.Type) async throws -> T {
         var components = URLComponents(url: baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: true)!
         var items = [URLQueryItem(name: "api_key", value: apiKey)]
@@ -94,7 +95,7 @@ public class TMDBClient {
         }
         return try JSONDecoder().decode(T.self, from: data)
     }
-
+    
     public func searchMovies(query: String, language: String = "en") async throws -> [Movie] {
         let response: SearchResponse<Movie> = try await request(endpoint: "search/movie", queryItems: [
             URLQueryItem(name: "query", value: query),
@@ -102,7 +103,7 @@ public class TMDBClient {
         ], type: SearchResponse<Movie>.self)
         return response.results
     }
-
+    
     public func searchTVShows(query: String, language: String = "en") async throws -> [TVShow] {
         let response: SearchResponse<TVShow> = try await request(endpoint: "search/tv", queryItems: [
             URLQueryItem(name: "query", value: query),
@@ -110,7 +111,7 @@ public class TMDBClient {
         ], type: SearchResponse<TVShow>.self)
         return response.results
     }
-
+    
     public func trending(mediaType: MediaType, timeWindow: String = "week", language: String = "en") async throws -> [Movie] {
         // trending endpoint returns both movies and tv shows; for simplicity map to Movie using title/name
         switch mediaType {
@@ -124,7 +125,7 @@ public class TMDBClient {
             return response.results.map { Movie(id: $0.id, title: $0.name, overview: $0.overview, posterPath: $0.posterPath, releaseDate: $0.firstAirDate, voteAverage: $0.voteAverage) }
         }
     }
-
+    
     public func movieDetails(id: Int, language: String = "en") async throws -> MovieDetails {
         async let movie: Movie = request(endpoint: "movie/\(id)", queryItems: [URLQueryItem(name: "language", value: language)], type: Movie.self)
         async let creditsResp: CreditsResponse = request(endpoint: "movie/\(id)/credits", queryItems: [], type: CreditsResponse.self)
@@ -132,7 +133,7 @@ public class TMDBClient {
         let credits = try await creditsResp
         return MovieDetails(movie: m, cast: credits.cast)
     }
-
+    
     public func tvShowDetails(id: Int, language: String = "en") async throws -> TVShowDetails {
         async let show: TVShow = request(endpoint: "tv/\(id)", queryItems: [URLQueryItem(name: "language", value: language)], type: TVShow.self)
         async let creditsResp: CreditsResponse = request(endpoint: "tv/\(id)/credits", queryItems: [], type: CreditsResponse.self)
@@ -140,21 +141,21 @@ public class TMDBClient {
         let credits = try await creditsResp
         return TVShowDetails(show: s, cast: credits.cast)
     }
-
+    
     // MARK: Streaming Links
     public func movieStreamingURL(tmdbId: Int) -> URL {
         URL(string: "https://vixsrc.to/movie/\(tmdbId)")!
     }
-
+    
     public func showStreamingURL(tmdbId: Int, season: Int, episode: Int) -> URL {
         URL(string: "https://vixsrc.to/tv/\(tmdbId)/\(season)/\(episode)")!
     }
-
+    
     // MARK: Images
     public func imageURL(path: String, size: String = "w500") -> URL {
         imageBaseURL.appendingPathComponent(size).appendingPathComponent(path)
     }
-
+    
     // MARK: Discover
     public func discoverMovies(genre: Int? = nil, language: String = "en") async throws -> [Movie] {
         var query: [URLQueryItem] = [URLQueryItem(name: "language", value: language)]
