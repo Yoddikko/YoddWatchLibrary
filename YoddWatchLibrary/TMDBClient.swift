@@ -78,7 +78,9 @@ public class TMDBClient {
         let url = components.url!
         if let cached = cache.object(forKey: url as NSURL) {
             do {
-                return try JSONDecoder().decode(T.self, from: cached as Data)
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                return try decoder.decode(T.self, from: cached as Data)
             } catch {
                 throw TMDBError.decodeError
             }
@@ -89,11 +91,12 @@ public class TMDBClient {
         guard (200..<300).contains(http.statusCode) else { throw TMDBError.httpError(http.statusCode) }
         cache.setObject(data as NSData, forKey: url as NSURL)
         do {
-            return try JSONDecoder().decode(T.self, from: data)
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            return try decoder.decode(T.self, from: data)
         } catch {
             throw TMDBError.decodeError
         }
-        return try JSONDecoder().decode(T.self, from: data)
     }
     
     public func searchMovies(query: String, language: String = "en") async throws -> [Movie] {
