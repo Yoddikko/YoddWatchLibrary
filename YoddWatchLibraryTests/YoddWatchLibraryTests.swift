@@ -27,4 +27,19 @@ struct YoddWatchLibraryTests {
         prefs.setProgress(id: 7, minutes: 42)
         #expect(prefs.progress(for: 7) == 42)
     }
+
+    @Test func defaultMovieCategories() throws {
+        let client = TMDBClient(apiKey: "test")!
+        let categories = client.defaultMovieCategories()
+        #expect(!categories.isEmpty)
+        let names = categories.map { $0.name }
+        #expect(names.contains("Trending"))
+        #expect(names.contains("Top Rated"))
+    }
+
+    @Test func defaultMovieCategoriesPreload() async throws {
+        let client = TMDBClient(apiKey: "test")!
+        let categories = try await client.defaultMovieCategories(preload: false)
+        #expect(!categories.isEmpty)
+    }
 }

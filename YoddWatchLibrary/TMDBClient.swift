@@ -300,5 +300,16 @@ public class TMDBClient {
             }
         ]
     }
+
+    /// Returns default categories and optionally preloads the first page of each one.
+    public func defaultMovieCategories(region: String = "US", language: String = "en", preload: Bool) async throws -> [MovieCategory] {
+        let categories = defaultMovieCategories(region: region, language: language)
+        if preload {
+            for category in categories {
+                try await category.reload()
+            }
+        }
+        return categories
+    }
 }
 
