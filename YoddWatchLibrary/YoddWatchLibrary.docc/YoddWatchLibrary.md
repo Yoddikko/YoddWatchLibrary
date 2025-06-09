@@ -23,6 +23,7 @@ A lightweight framework providing access to The Movie Database API and basic use
 - ``Genre``
 - ``MovieCategory``
 - ``TMDBClient.defaultMovieCategories(region:language:)``
+- ``TMDBClient.defaultTVShowCategories(region:language:)``
 
 ### Preferences
 - ``UserPreferences``
