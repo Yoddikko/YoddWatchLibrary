@@ -54,6 +54,7 @@ public enum Genre: Int {
 
 /// A dynamic list of movies belonging to a specific category.
 public class MovieCategory {
+    public let id = UUID()
     public let name: String
     private let loader: (_ page: Int) async throws -> [Movie]
     private(set) public var page: Int = 0
