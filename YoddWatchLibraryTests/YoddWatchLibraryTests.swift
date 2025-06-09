@@ -42,4 +42,19 @@ struct YoddWatchLibraryTests {
         let categories = try await client.defaultMovieCategories(preload: false)
         #expect(!categories.isEmpty)
     }
+
+    @Test func defaultTVShowCategories() throws {
+        let client = TMDBClient(apiKey: "test")!
+        let categories = client.defaultTVShowCategories()
+        #expect(!categories.isEmpty)
+        let names = categories.map { $0.name }
+        #expect(names.contains("Trending"))
+        #expect(names.contains("Top Rated"))
+    }
+
+    @Test func defaultTVShowCategoriesPreload() async throws {
+        let client = TMDBClient(apiKey: "test")!
+        let categories = try await client.defaultTVShowCategories(preload: false)
+        #expect(!categories.isEmpty)
+    }
 }
