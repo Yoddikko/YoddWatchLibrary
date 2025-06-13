@@ -3,6 +3,7 @@
 //  YoddWatchLibraryTests
 //
 
+import Foundation
 import Testing
 @testable import YoddWatchLibrary
 
@@ -56,5 +57,26 @@ struct YoddWatchLibraryTests {
         let client = TMDBClient(apiKey: "test")!
         let categories = try await client.defaultTVShowCategories(preload: false)
         #expect(!categories.isEmpty)
+    }
+
+    @Test func decodeEpisode() throws {
+        let json = """
+        {
+            "id": 1,
+            "name": "Pilot",
+            "overview": "Intro",
+            "still_path": "/img.jpg",
+            "season_number": 1,
+            "episode_number": 1,
+            "air_date": "2022-01-01",
+            "vote_average": 7.5
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let episode = try decoder.decode(Episode.self, from: json)
+        #expect(episode.id == 1)
+        #expect(episode.seasonNumber == 1)
+        #expect(episode.episodeNumber == 1)
     }
 }

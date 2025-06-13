@@ -37,6 +37,18 @@ public struct Person: Codable {
     public let profilePath: String?
 }
 
+/// A single episode of a TV show season.
+public struct Episode: Codable {
+    public let id: Int
+    public let name: String
+    public let overview: String?
+    public let stillPath: String?
+    public let seasonNumber: Int
+    public let episodeNumber: Int
+    public let airDate: String?
+    public let voteAverage: Double?
+}
+
 /// Known watch providers used by some helper methods.
 public enum WatchProvider: Int {
     case netflix = 8
@@ -210,6 +222,28 @@ public class TMDBClient {
         let s = try await show
         let credits = try await creditsResp
         return TVShowDetails(show: s, cast: credits.cast)
+    }
+
+    /// Fetches the episodes for a specific season of a TV show.
+    public func episodes(showId: Int, season: Int, language: String = "en") async throws -> [Episode] {
+        struct SeasonResponse: Codable { let episodes: [Episode] }
+        let response: SeasonResponse = try await request(
+            endpoint: "tv/\(showId)/season/\(season)",
+            queryItems: [URLQueryItem(name: "language", value: language)],
+            type: SeasonResponse.self
+        )
+        return response.episodes
+    }
+
+    /// Retrieves the number of seasons available for the given TV show.
+    public func numberOfSeasons(showId: Int, language: String = "en") async throws -> Int {
+        struct ShowInfo: Codable { let numberOfSeasons: Int }
+        let info: ShowInfo = try await request(
+            endpoint: "tv/\(showId)",
+            queryItems: [URLQueryItem(name: "language", value: language)],
+            type: ShowInfo.self
+        )
+        return info.numberOfSeasons
     }
 
     // MARK: Top/Popular
