@@ -37,17 +37,6 @@ public struct Person: Codable {
     public let profilePath: String?
 }
 
-/// A single episode of a TV show season.
-public struct Episode: Codable {
-    public let id: Int
-    public let name: String
-    public let overview: String?
-    public let stillPath: String?
-    public let seasonNumber: Int
-    public let episodeNumber: Int
-    public let airDate: String?
-    public let voteAverage: Double?
-}
 
 /// Known watch providers used by some helper methods.
 public enum WatchProvider: Int {
