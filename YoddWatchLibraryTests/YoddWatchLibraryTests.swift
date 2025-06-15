@@ -103,4 +103,37 @@ struct YoddWatchLibraryTests {
         #expect(movie.runtime == 120)
         #expect(movie.genres?.first?.name == "Drama")
     }
+
+    @Test func decodeVideoInfo() throws {
+        let json = """
+        {
+            "name": "Trailer",
+            "key": "abc",
+            "site": "YouTube",
+            "type": "Trailer"
+        }
+        """.data(using: .utf8)!
+        let video = try JSONDecoder().decode(VideoInfo.self, from: json)
+        #expect(video.key == "abc")
+    }
+
+    @Test func decodePersonDetails() throws {
+        let json = """
+        {
+            "id": 1,
+            "name": "Actor",
+            "character": "Role",
+            "profile_path": "/p.jpg",
+            "biography": "An actor",
+            "birthday": "1970-01-01",
+            "place_of_birth": "Somewhere"
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let person = try decoder.decode(Person.self, from: json)
+        #expect(person.biography == "An actor")
+        #expect(person.birthday == "1970-01-01")
+        #expect(person.placeOfBirth == "Somewhere")
+    }
 }

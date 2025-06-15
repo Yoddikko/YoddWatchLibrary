@@ -90,6 +90,45 @@ public struct Person: Codable {
     public let name: String
     public let character: String?
     public let profilePath: String?
+    public let biography: String?
+    public let birthday: String?
+    public let placeOfBirth: String?
+
+    public init(id: Int, name: String, character: String?, profilePath: String?, biography: String? = nil, birthday: String? = nil, placeOfBirth: String? = nil) {
+        self.id = id
+        self.name = name
+        self.character = character
+        self.profilePath = profilePath
+        self.biography = biography
+        self.birthday = birthday
+        self.placeOfBirth = placeOfBirth
+    }
+
+    public init(id: Int, name: String, character: String?, profilePath: String?) {
+        self.init(id: id, name: name, character: character, profilePath: profilePath, biography: nil, birthday: nil, placeOfBirth: nil)
+    }
+}
+
+public struct ImageInfo: Codable {
+    public let filePath: String
+    public let width: Int?
+    public let height: Int?
+}
+
+public struct VideoInfo: Codable {
+    public let name: String
+    public let key: String
+    public let site: String
+    public let type: String
+}
+
+public struct MediaImages: Codable {
+    public let posters: [ImageInfo]
+    public let backdrops: [ImageInfo]
+}
+
+public struct PersonImages: Codable {
+    public let profiles: [ImageInfo]
 }
 
 
@@ -159,6 +198,19 @@ struct SearchResponse<T: Codable>: Codable {
 
 struct TrendingResponse<T: Codable>: Codable {
     let results: [T]
+}
+
+struct ImagesResponse: Codable {
+    let backdrops: [ImageInfo]
+    let posters: [ImageInfo]
+}
+
+struct PersonImagesResponse: Codable {
+    let profiles: [ImageInfo]
+}
+
+struct VideosResponse: Codable {
+    let results: [VideoInfo]
 }
 
 public enum TMDBError: Error {
@@ -268,6 +320,10 @@ public class TMDBClient {
         return TVShowDetails(show: s, cast: credits.cast)
     }
 
+    public func personDetails(id: Int, language: String = "en") async throws -> Person {
+        try await request(endpoint: "person/\(id)", queryItems: [URLQueryItem(name: "language", value: language)], type: Person.self)
+    }
+
     /// Fetches the episodes for a specific season of a TV show.
     public func episodes(showId: Int, season: Int, language: String = "en") async throws -> [Episode] {
         struct SeasonResponse: Codable { let episodes: [Episode] }
@@ -361,6 +417,48 @@ public class TMDBClient {
     // MARK: Images
     public func imageURL(path: String, size: String = "w500") -> URL {
         imageBaseURL.appendingPathComponent(size).appendingPathComponent(path)
+    }
+
+    public func movieImages(id: Int) async throws -> MediaImages {
+        let resp: ImagesResponse = try await request(endpoint: "movie/\(id)/images", type: ImagesResponse.self)
+        return MediaImages(posters: resp.posters, backdrops: resp.backdrops)
+    }
+
+    public func tvShowImages(id: Int) async throws -> MediaImages {
+        let resp: ImagesResponse = try await request(endpoint: "tv/\(id)/images", type: ImagesResponse.self)
+        return MediaImages(posters: resp.posters, backdrops: resp.backdrops)
+    }
+
+    public func personImages(id: Int) async throws -> [ImageInfo] {
+        let resp: PersonImagesResponse = try await request(endpoint: "person/\(id)/images", type: PersonImagesResponse.self)
+        return resp.profiles
+    }
+
+    // MARK: Videos
+    public func movieVideos(id: Int, language: String = "en") async throws -> [VideoInfo] {
+        let resp: VideosResponse = try await request(endpoint: "movie/\(id)/videos", queryItems: [URLQueryItem(name: "language", value: language)], type: VideosResponse.self)
+        return resp.results
+    }
+
+    public func tvShowVideos(id: Int, language: String = "en") async throws -> [VideoInfo] {
+        let resp: VideosResponse = try await request(endpoint: "tv/\(id)/videos", queryItems: [URLQueryItem(name: "language", value: language)], type: VideosResponse.self)
+        return resp.results
+    }
+
+    public func movieTrailerURL(id: Int, language: String = "en") async throws -> URL? {
+        let videos = try await movieVideos(id: id, language: language)
+        if let video = videos.first(where: { $0.site.lowercased() == "youtube" && $0.type.lowercased() == "trailer" }) {
+            return URL(string: "https://www.youtube.com/watch?v=\(video.key)")
+        }
+        return nil
+    }
+
+    public func tvShowTrailerURL(id: Int, language: String = "en") async throws -> URL? {
+        let videos = try await tvShowVideos(id: id, language: language)
+        if let video = videos.first(where: { $0.site.lowercased() == "youtube" && $0.type.lowercased() == "trailer" }) {
+            return URL(string: "https://www.youtube.com/watch?v=\(video.key)")
+        }
+        return nil
     }
     
     // MARK: Discover
