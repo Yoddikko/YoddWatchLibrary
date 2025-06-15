@@ -79,4 +79,28 @@ struct YoddWatchLibraryTests {
         #expect(episode.seasonNumber == 1)
         #expect(episode.episodeNumber == 1)
     }
+
+    @Test func decodeMovieDetails() throws {
+        let json = """
+        {
+            "id": 10,
+            "title": "Example",
+            "overview": "Test",
+            "poster_path": "/p.jpg",
+            "backdrop_path": "/b.jpg",
+            "release_date": "2024-01-01",
+            "vote_average": 8.0,
+            "runtime": 120,
+            "tagline": "Tag",
+            "homepage": "https://example.com",
+            "genres": [{"id": 1, "name": "Drama"}]
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let movie = try decoder.decode(Movie.self, from: json)
+        #expect(movie.id == 10)
+        #expect(movie.runtime == 120)
+        #expect(movie.genres?.first?.name == "Drama")
+    }
 }

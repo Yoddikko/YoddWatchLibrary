@@ -8,6 +8,8 @@ A lightweight framework providing access to The Movie Database API and basic use
 
 `UserPreferences` allows storing favorites, watched items, the preferred language (`en` or `it`), custom lists and playback progress.
 
+`Movie` and `TVShow` expose additional optional details when fetching single items, such as backdrops, taglines, runtimes and genres.
+
 
 ## Topics
 
@@ -24,6 +26,7 @@ A lightweight framework providing access to The Movie Database API and basic use
 - ``Person``
 - ``WatchProvider``
 - ``Genre``
+- ``GenreInfo``
 - ``MovieCategory``
 - ``TMDBClient.defaultMovieCategories(region:language:)``
 - ``TMDBClient.defaultTVShowCategories(region:language:)``

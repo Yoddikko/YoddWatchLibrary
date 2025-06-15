@@ -12,13 +12,41 @@ public enum MediaType: String {
     case tv
 }
 
+public struct GenreInfo: Codable {
+    public let id: Int
+    public let name: String
+}
+
 public struct Movie: Codable {
     public let id: Int
     public let title: String
     public let overview: String?
     public let posterPath: String?
+    public let backdropPath: String?
     public let releaseDate: String?
     public let voteAverage: Double?
+    public let runtime: Int?
+    public let tagline: String?
+    public let homepage: String?
+    public let genres: [GenreInfo]?
+
+    public init(id: Int, title: String, overview: String?, posterPath: String?, backdropPath: String? = nil, releaseDate: String?, voteAverage: Double?, runtime: Int? = nil, tagline: String? = nil, homepage: String? = nil, genres: [GenreInfo]? = nil) {
+        self.id = id
+        self.title = title
+        self.overview = overview
+        self.posterPath = posterPath
+        self.backdropPath = backdropPath
+        self.releaseDate = releaseDate
+        self.voteAverage = voteAverage
+        self.runtime = runtime
+        self.tagline = tagline
+        self.homepage = homepage
+        self.genres = genres
+    }
+
+    public init(id: Int, title: String, overview: String?, posterPath: String?, releaseDate: String?, voteAverage: Double?) {
+        self.init(id: id, title: title, overview: overview, posterPath: posterPath, backdropPath: nil, releaseDate: releaseDate, voteAverage: voteAverage, runtime: nil, tagline: nil, homepage: nil, genres: nil)
+    }
 }
 
 public struct TVShow: Codable {
@@ -26,8 +54,35 @@ public struct TVShow: Codable {
     public let name: String
     public let overview: String?
     public let posterPath: String?
+    public let backdropPath: String?
     public let firstAirDate: String?
     public let voteAverage: Double?
+    public let tagline: String?
+    public let homepage: String?
+    public let genres: [GenreInfo]?
+    public let numberOfSeasons: Int?
+    public let numberOfEpisodes: Int?
+    public let episodeRunTime: [Int]?
+
+    public init(id: Int, name: String, overview: String?, posterPath: String?, backdropPath: String? = nil, firstAirDate: String?, voteAverage: Double?, tagline: String? = nil, homepage: String? = nil, genres: [GenreInfo]? = nil, numberOfSeasons: Int? = nil, numberOfEpisodes: Int? = nil, episodeRunTime: [Int]? = nil) {
+        self.id = id
+        self.name = name
+        self.overview = overview
+        self.posterPath = posterPath
+        self.backdropPath = backdropPath
+        self.firstAirDate = firstAirDate
+        self.voteAverage = voteAverage
+        self.tagline = tagline
+        self.homepage = homepage
+        self.genres = genres
+        self.numberOfSeasons = numberOfSeasons
+        self.numberOfEpisodes = numberOfEpisodes
+        self.episodeRunTime = episodeRunTime
+    }
+
+    public init(id: Int, name: String, overview: String?, posterPath: String?, firstAirDate: String?, voteAverage: Double?) {
+        self.init(id: id, name: name, overview: overview, posterPath: posterPath, backdropPath: nil, firstAirDate: firstAirDate, voteAverage: voteAverage, tagline: nil, homepage: nil, genres: nil, numberOfSeasons: nil, numberOfEpisodes: nil, episodeRunTime: nil)
+    }
 }
 
 public struct Person: Codable {
