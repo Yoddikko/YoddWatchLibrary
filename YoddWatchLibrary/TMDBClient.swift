@@ -12,13 +12,41 @@ public enum MediaType: String {
     case tv
 }
 
+public struct GenreInfo: Codable {
+    public let id: Int
+    public let name: String
+}
+
 public struct Movie: Codable {
     public let id: Int
     public let title: String
     public let overview: String?
     public let posterPath: String?
+    public let backdropPath: String?
     public let releaseDate: String?
     public let voteAverage: Double?
+    public let runtime: Int?
+    public let tagline: String?
+    public let homepage: String?
+    public let genres: [GenreInfo]?
+
+    public init(id: Int, title: String, overview: String?, posterPath: String?, backdropPath: String? = nil, releaseDate: String?, voteAverage: Double?, runtime: Int? = nil, tagline: String? = nil, homepage: String? = nil, genres: [GenreInfo]? = nil) {
+        self.id = id
+        self.title = title
+        self.overview = overview
+        self.posterPath = posterPath
+        self.backdropPath = backdropPath
+        self.releaseDate = releaseDate
+        self.voteAverage = voteAverage
+        self.runtime = runtime
+        self.tagline = tagline
+        self.homepage = homepage
+        self.genres = genres
+    }
+
+    public init(id: Int, title: String, overview: String?, posterPath: String?, releaseDate: String?, voteAverage: Double?) {
+        self.init(id: id, title: title, overview: overview, posterPath: posterPath, backdropPath: nil, releaseDate: releaseDate, voteAverage: voteAverage, runtime: nil, tagline: nil, homepage: nil, genres: nil)
+    }
 }
 
 public struct TVShow: Codable {
@@ -26,8 +54,35 @@ public struct TVShow: Codable {
     public let name: String
     public let overview: String?
     public let posterPath: String?
+    public let backdropPath: String?
     public let firstAirDate: String?
     public let voteAverage: Double?
+    public let tagline: String?
+    public let homepage: String?
+    public let genres: [GenreInfo]?
+    public let numberOfSeasons: Int?
+    public let numberOfEpisodes: Int?
+    public let episodeRunTime: [Int]?
+
+    public init(id: Int, name: String, overview: String?, posterPath: String?, backdropPath: String? = nil, firstAirDate: String?, voteAverage: Double?, tagline: String? = nil, homepage: String? = nil, genres: [GenreInfo]? = nil, numberOfSeasons: Int? = nil, numberOfEpisodes: Int? = nil, episodeRunTime: [Int]? = nil) {
+        self.id = id
+        self.name = name
+        self.overview = overview
+        self.posterPath = posterPath
+        self.backdropPath = backdropPath
+        self.firstAirDate = firstAirDate
+        self.voteAverage = voteAverage
+        self.tagline = tagline
+        self.homepage = homepage
+        self.genres = genres
+        self.numberOfSeasons = numberOfSeasons
+        self.numberOfEpisodes = numberOfEpisodes
+        self.episodeRunTime = episodeRunTime
+    }
+
+    public init(id: Int, name: String, overview: String?, posterPath: String?, firstAirDate: String?, voteAverage: Double?) {
+        self.init(id: id, name: name, overview: overview, posterPath: posterPath, backdropPath: nil, firstAirDate: firstAirDate, voteAverage: voteAverage, tagline: nil, homepage: nil, genres: nil, numberOfSeasons: nil, numberOfEpisodes: nil, episodeRunTime: nil)
+    }
 }
 
 public struct Person: Codable {
@@ -35,6 +90,45 @@ public struct Person: Codable {
     public let name: String
     public let character: String?
     public let profilePath: String?
+    public let biography: String?
+    public let birthday: String?
+    public let placeOfBirth: String?
+
+    public init(id: Int, name: String, character: String?, profilePath: String?, biography: String? = nil, birthday: String? = nil, placeOfBirth: String? = nil) {
+        self.id = id
+        self.name = name
+        self.character = character
+        self.profilePath = profilePath
+        self.biography = biography
+        self.birthday = birthday
+        self.placeOfBirth = placeOfBirth
+    }
+
+    public init(id: Int, name: String, character: String?, profilePath: String?) {
+        self.init(id: id, name: name, character: character, profilePath: profilePath, biography: nil, birthday: nil, placeOfBirth: nil)
+    }
+}
+
+public struct ImageInfo: Codable {
+    public let filePath: String
+    public let width: Int?
+    public let height: Int?
+}
+
+public struct VideoInfo: Codable {
+    public let name: String
+    public let key: String
+    public let site: String
+    public let type: String
+}
+
+public struct MediaImages: Codable {
+    public let posters: [ImageInfo]
+    public let backdrops: [ImageInfo]
+}
+
+public struct PersonImages: Codable {
+    public let profiles: [ImageInfo]
 }
 
 
@@ -104,6 +198,19 @@ struct SearchResponse<T: Codable>: Codable {
 
 struct TrendingResponse<T: Codable>: Codable {
     let results: [T]
+}
+
+struct ImagesResponse: Codable {
+    let backdrops: [ImageInfo]
+    let posters: [ImageInfo]
+}
+
+struct PersonImagesResponse: Codable {
+    let profiles: [ImageInfo]
+}
+
+struct VideosResponse: Codable {
+    let results: [VideoInfo]
 }
 
 public enum TMDBError: Error {
@@ -213,6 +320,10 @@ public class TMDBClient {
         return TVShowDetails(show: s, cast: credits.cast)
     }
 
+    public func personDetails(id: Int, language: String = "en") async throws -> Person {
+        try await request(endpoint: "person/\(id)", queryItems: [URLQueryItem(name: "language", value: language)], type: Person.self)
+    }
+
     /// Fetches the episodes for a specific season of a TV show.
     public func episodes(showId: Int, season: Int, language: String = "en") async throws -> [Episode] {
         struct SeasonResponse: Codable { let episodes: [Episode] }
@@ -306,6 +417,48 @@ public class TMDBClient {
     // MARK: Images
     public func imageURL(path: String, size: String = "w500") -> URL {
         imageBaseURL.appendingPathComponent(size).appendingPathComponent(path)
+    }
+
+    public func movieImages(id: Int) async throws -> MediaImages {
+        let resp: ImagesResponse = try await request(endpoint: "movie/\(id)/images", type: ImagesResponse.self)
+        return MediaImages(posters: resp.posters, backdrops: resp.backdrops)
+    }
+
+    public func tvShowImages(id: Int) async throws -> MediaImages {
+        let resp: ImagesResponse = try await request(endpoint: "tv/\(id)/images", type: ImagesResponse.self)
+        return MediaImages(posters: resp.posters, backdrops: resp.backdrops)
+    }
+
+    public func personImages(id: Int) async throws -> [ImageInfo] {
+        let resp: PersonImagesResponse = try await request(endpoint: "person/\(id)/images", type: PersonImagesResponse.self)
+        return resp.profiles
+    }
+
+    // MARK: Videos
+    public func movieVideos(id: Int, language: String = "en") async throws -> [VideoInfo] {
+        let resp: VideosResponse = try await request(endpoint: "movie/\(id)/videos", queryItems: [URLQueryItem(name: "language", value: language)], type: VideosResponse.self)
+        return resp.results
+    }
+
+    public func tvShowVideos(id: Int, language: String = "en") async throws -> [VideoInfo] {
+        let resp: VideosResponse = try await request(endpoint: "tv/\(id)/videos", queryItems: [URLQueryItem(name: "language", value: language)], type: VideosResponse.self)
+        return resp.results
+    }
+
+    public func movieTrailerURL(id: Int, language: String = "en") async throws -> URL? {
+        let videos = try await movieVideos(id: id, language: language)
+        if let video = videos.first(where: { $0.site.lowercased() == "youtube" && $0.type.lowercased() == "trailer" }) {
+            return URL(string: "https://www.youtube.com/watch?v=\(video.key)")
+        }
+        return nil
+    }
+
+    public func tvShowTrailerURL(id: Int, language: String = "en") async throws -> URL? {
+        let videos = try await tvShowVideos(id: id, language: language)
+        if let video = videos.first(where: { $0.site.lowercased() == "youtube" && $0.type.lowercased() == "trailer" }) {
+            return URL(string: "https://www.youtube.com/watch?v=\(video.key)")
+        }
+        return nil
     }
     
     // MARK: Discover
