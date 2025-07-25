@@ -349,6 +349,10 @@ public class TMDBClient {
     private func asMovies(_ shows: [TVShow]) -> [Movie] {
         shows.map { Movie(id: $0.id, title: $0.name, overview: $0.overview, posterPath: $0.posterPath, releaseDate: $0.firstAirDate, voteAverage: $0.voteAverage) }
     }
+
+    private func asMovies(_ shows: [TVShow]) -> [Movie] {
+        shows.map { Movie(id: $0.id, title: $0.name, overview: $0.overview, posterPath: $0.posterPath, releaseDate: $0.firstAirDate, voteAverage: $0.voteAverage) }
+    }
     
     public func movieDetails(id: Int, language: String = "en") async throws -> MovieDetails {
         async let movie: Movie = request(endpoint: "movie/\(id)", queryItems: [URLQueryItem(name: "language", value: language)], type: Movie.self)
@@ -651,6 +655,42 @@ public class TMDBClient {
 
     /// Returns default TV show categories and optionally preloads the first page of each one.
     public func defaultTVShowCategories(region: String = "US", language: String = "en", preload: Bool) async throws -> [TVShowCategory] {
+        let categories = defaultTVShowCategories(region: region, language: language)
+        if preload {
+            for category in categories {
+                try await category.reload()
+            }
+        }
+        return categories
+    }
+
+    /// Convenience method returning a set of common TV show categories.
+    public func defaultTVShowCategories(region: String = "US", language: String = "en") -> [MovieCategory] {
+        [
+            MovieCategory(name: "Trending") { page in
+                try await self.trendingTVShows(language: language, page: page)
+            },
+            MovieCategory(name: "Top Rated") { page in
+                let shows = try await self.topRatedTVShows(language: language, page: page)
+                return self.asMovies(shows)
+            },
+            MovieCategory(name: "Popular") { page in
+                let shows = try await self.popularTVShows(language: language, page: page)
+                return self.asMovies(shows)
+            },
+            MovieCategory(name: "Top on Netflix") { page in
+                let shows = try await self.topTVShows(provider: .netflix, region: region, language: language, page: page)
+                return self.asMovies(shows)
+            },
+            MovieCategory(name: "Top on Prime Video") { page in
+                let shows = try await self.topTVShows(provider: .primeVideo, region: region, language: language, page: page)
+                return self.asMovies(shows)
+            }
+        ]
+    }
+
+    /// Returns default TV show categories and optionally preloads the first page of each one.
+    public func defaultTVShowCategories(region: String = "US", language: String = "en", preload: Bool) async throws -> [MovieCategory] {
         let categories = defaultTVShowCategories(region: region, language: language)
         if preload {
             for category in categories {
