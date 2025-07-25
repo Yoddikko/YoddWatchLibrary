@@ -37,6 +37,7 @@ A lightweight framework providing access to The Movie Database API and basic use
 - ``ImageInfo``
 - ``VideoInfo``
 - ``MovieCategory``
+- ``TVShowCategory``
 - ``TMDBClient.defaultMovieCategories(region:language:)``
 - ``TMDBClient.defaultTVShowCategories(region:language:)``
 

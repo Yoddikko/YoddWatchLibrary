@@ -143,8 +143,24 @@ public enum WatchProvider: Int {
 /// Basic genres used to build default movie categories.
 public enum Genre: Int {
     case action = 28
+    case adventure = 12
+    case animation = 16
     case comedy = 35
+    case crime = 80
+    case documentary = 99
     case drama = 18
+    case family = 10751
+    case fantasy = 14
+    case history = 36
+    case horror = 27
+    case music = 10402
+    case mystery = 9648
+    case romance = 10749
+    case scienceFiction = 878
+    case tvMovie = 10770
+    case thriller = 53
+    case war = 10752
+    case western = 37
 }
 
 /// A dynamic list of movies belonging to a specific category.
@@ -171,6 +187,37 @@ public class MovieCategory {
     /// Fetches the next page and appends the results.
     @discardableResult
     public func loadNext() async throws -> [Movie] {
+        page += 1
+        let more = try await loader(page)
+        items.append(contentsOf: more)
+        return more
+    }
+}
+
+/// A dynamic list of TV shows belonging to a specific category.
+public class TVShowCategory {
+    public let id = UUID()
+    public let name: String
+    private let loader: (_ page: Int) async throws -> [TVShow]
+    private(set) public var page: Int = 0
+    public private(set) var items: [TVShow] = []
+
+    public init(name: String, loader: @escaping (_ page: Int) async throws -> [TVShow]) {
+        self.name = name
+        self.loader = loader
+    }
+
+    /// Reloads the first page of results, replacing current items.
+    @discardableResult
+    public func reload() async throws -> [TVShow] {
+        page = 1
+        items = try await loader(page)
+        return items
+    }
+
+    /// Fetches the next page and appends the results.
+    @discardableResult
+    public func loadNext() async throws -> [TVShow] {
         page += 1
         let more = try await loader(page)
         items.append(contentsOf: more)
@@ -280,7 +327,8 @@ public class TMDBClient {
         case .movie:
             return try await trendingMovies(timeWindow: timeWindow, language: language, page: page)
         case .tv:
-            return try await trendingTVShows(timeWindow: timeWindow, language: language, page: page)
+            let shows = try await trendingTVShows(timeWindow: timeWindow, language: language, page: page)
+            return self.asMovies(shows)
         }
     }
 
@@ -291,13 +339,11 @@ public class TMDBClient {
         return response.results
     }
 
-    /// Trending TV shows mapped to ``Movie`` for convenience.
-    public func trendingTVShows(timeWindow: String = "week", language: String = "en", page: Int = 1) async throws -> [Movie] {
+    /// Trending TV shows for the given time window (`day` or `week`).
+    public func trendingTVShows(timeWindow: String = "week", language: String = "en", page: Int = 1) async throws -> [TVShow] {
         let endpoint = "trending/tv/\(timeWindow)"
         let response: TrendingResponse<TVShow> = try await request(endpoint: endpoint, queryItems: [URLQueryItem(name: "language", value: language), URLQueryItem(name: "page", value: String(page))], type: TrendingResponse<TVShow>.self)
-        return response.results.map {
-            Movie(id: $0.id, title: $0.name, overview: $0.overview, posterPath: $0.posterPath, releaseDate: $0.firstAirDate, voteAverage: $0.voteAverage)
-        }
+        return response.results
     }
 
     private func asMovies(_ shows: [TVShow]) -> [Movie] {
@@ -485,11 +531,11 @@ public class TMDBClient {
             MovieCategory(name: "Top on Prime Video") { page in
                 try await self.topMovies(provider: .primeVideo, region: region, language: language, page: page)
             },
-            MovieCategory(name: "Action") { page in
-                try await self.discoverMovies(genre: Genre.action.rawValue, language: language, page: page)
+            MovieCategory(name: "Top on Disney+") { page in
+                try await self.topMovies(provider: .disneyPlus, region: region, language: language, page: page)
             },
-            MovieCategory(name: "Comedy") { page in
-                try await self.discoverMovies(genre: Genre.comedy.rawValue, language: language, page: page)
+            MovieCategory(name: "Top on Apple TV+") { page in
+                try await self.topMovies(provider: .appleTVPlus, region: region, language: language, page: page)
             }
         ]
     }
@@ -505,33 +551,106 @@ public class TMDBClient {
         return categories
     }
 
-    /// Convenience method returning a set of common TV show categories.
-    public func defaultTVShowCategories(region: String = "US", language: String = "en") -> [MovieCategory] {
+    /// Returns movie categories based on common genres.
+    public func genreMovieCategories(language: String = "en") -> [MovieCategory] {
         [
-            MovieCategory(name: "Trending") { page in
+            MovieCategory(name: "Action") { page in
+                try await self.discoverMovies(genre: Genre.action.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Adventure") { page in
+                try await self.discoverMovies(genre: Genre.adventure.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Animation") { page in
+                try await self.discoverMovies(genre: Genre.animation.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Comedy") { page in
+                try await self.discoverMovies(genre: Genre.comedy.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Crime") { page in
+                try await self.discoverMovies(genre: Genre.crime.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Documentary") { page in
+                try await self.discoverMovies(genre: Genre.documentary.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Drama") { page in
+                try await self.discoverMovies(genre: Genre.drama.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Family") { page in
+                try await self.discoverMovies(genre: Genre.family.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Fantasy") { page in
+                try await self.discoverMovies(genre: Genre.fantasy.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "History") { page in
+                try await self.discoverMovies(genre: Genre.history.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Horror") { page in
+                try await self.discoverMovies(genre: Genre.horror.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Music") { page in
+                try await self.discoverMovies(genre: Genre.music.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Mystery") { page in
+                try await self.discoverMovies(genre: Genre.mystery.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Romance") { page in
+                try await self.discoverMovies(genre: Genre.romance.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Sci-Fi") { page in
+                try await self.discoverMovies(genre: Genre.scienceFiction.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "TV Movie") { page in
+                try await self.discoverMovies(genre: Genre.tvMovie.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Thriller") { page in
+                try await self.discoverMovies(genre: Genre.thriller.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "War") { page in
+                try await self.discoverMovies(genre: Genre.war.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Western") { page in
+                try await self.discoverMovies(genre: Genre.western.rawValue, language: language, page: page)
+            }
+        ]
+    }
+
+    /// Returns genre categories and optionally preloads the first page of each one.
+    public func genreMovieCategories(language: String = "en", preload: Bool) async throws -> [MovieCategory] {
+        let categories = genreMovieCategories(language: language)
+        if preload {
+            for category in categories {
+                try await category.reload()
+            }
+        }
+        return categories
+    }
+
+    /// Convenience method returning a set of common TV show categories.
+    public func defaultTVShowCategories(region: String = "US", language: String = "en") -> [TVShowCategory] {
+        [
+            TVShowCategory(name: "Trending") { page in
                 try await self.trendingTVShows(language: language, page: page)
             },
-            MovieCategory(name: "Top Rated") { page in
-                let shows = try await self.topRatedTVShows(language: language, page: page)
-                return self.asMovies(shows)
+            TVShowCategory(name: "Top Rated") { page in
+                try await self.topRatedTVShows(language: language, page: page)
             },
-            MovieCategory(name: "Popular") { page in
-                let shows = try await self.popularTVShows(language: language, page: page)
-                return self.asMovies(shows)
+            TVShowCategory(name: "Top on Netflix") { page in
+                try await self.topTVShows(provider: .netflix, region: region, language: language, page: page)
             },
-            MovieCategory(name: "Top on Netflix") { page in
-                let shows = try await self.topTVShows(provider: .netflix, region: region, language: language, page: page)
-                return self.asMovies(shows)
+            TVShowCategory(name: "Top on Prime Video") { page in
+                try await self.topTVShows(provider: .primeVideo, region: region, language: language, page: page)
             },
-            MovieCategory(name: "Top on Prime Video") { page in
-                let shows = try await self.topTVShows(provider: .primeVideo, region: region, language: language, page: page)
-                return self.asMovies(shows)
+            TVShowCategory(name: "Top on Disney+") { page in
+                try await self.topTVShows(provider: .disneyPlus, region: region, language: language, page: page)
+            },
+            TVShowCategory(name: "Top on Apple TV+") { page in
+                try await self.topTVShows(provider: .appleTVPlus, region: region, language: language, page: page)
             }
         ]
     }
 
     /// Returns default TV show categories and optionally preloads the first page of each one.
-    public func defaultTVShowCategories(region: String = "US", language: String = "en", preload: Bool) async throws -> [MovieCategory] {
+    public func defaultTVShowCategories(region: String = "US", language: String = "en", preload: Bool) async throws -> [TVShowCategory] {
         let categories = defaultTVShowCategories(region: region, language: language)
         if preload {
             for category in categories {
