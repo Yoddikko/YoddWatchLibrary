@@ -12,13 +12,41 @@ public enum MediaType: String {
     case tv
 }
 
+public struct GenreInfo: Codable {
+    public let id: Int
+    public let name: String
+}
+
 public struct Movie: Codable {
     public let id: Int
     public let title: String
     public let overview: String?
     public let posterPath: String?
+    public let backdropPath: String?
     public let releaseDate: String?
     public let voteAverage: Double?
+    public let runtime: Int?
+    public let tagline: String?
+    public let homepage: String?
+    public let genres: [GenreInfo]?
+
+    public init(id: Int, title: String, overview: String?, posterPath: String?, backdropPath: String? = nil, releaseDate: String?, voteAverage: Double?, runtime: Int? = nil, tagline: String? = nil, homepage: String? = nil, genres: [GenreInfo]? = nil) {
+        self.id = id
+        self.title = title
+        self.overview = overview
+        self.posterPath = posterPath
+        self.backdropPath = backdropPath
+        self.releaseDate = releaseDate
+        self.voteAverage = voteAverage
+        self.runtime = runtime
+        self.tagline = tagline
+        self.homepage = homepage
+        self.genres = genres
+    }
+
+    public init(id: Int, title: String, overview: String?, posterPath: String?, releaseDate: String?, voteAverage: Double?) {
+        self.init(id: id, title: title, overview: overview, posterPath: posterPath, backdropPath: nil, releaseDate: releaseDate, voteAverage: voteAverage, runtime: nil, tagline: nil, homepage: nil, genres: nil)
+    }
 }
 
 public struct TVShow: Codable {
@@ -26,8 +54,35 @@ public struct TVShow: Codable {
     public let name: String
     public let overview: String?
     public let posterPath: String?
+    public let backdropPath: String?
     public let firstAirDate: String?
     public let voteAverage: Double?
+    public let tagline: String?
+    public let homepage: String?
+    public let genres: [GenreInfo]?
+    public let numberOfSeasons: Int?
+    public let numberOfEpisodes: Int?
+    public let episodeRunTime: [Int]?
+
+    public init(id: Int, name: String, overview: String?, posterPath: String?, backdropPath: String? = nil, firstAirDate: String?, voteAverage: Double?, tagline: String? = nil, homepage: String? = nil, genres: [GenreInfo]? = nil, numberOfSeasons: Int? = nil, numberOfEpisodes: Int? = nil, episodeRunTime: [Int]? = nil) {
+        self.id = id
+        self.name = name
+        self.overview = overview
+        self.posterPath = posterPath
+        self.backdropPath = backdropPath
+        self.firstAirDate = firstAirDate
+        self.voteAverage = voteAverage
+        self.tagline = tagline
+        self.homepage = homepage
+        self.genres = genres
+        self.numberOfSeasons = numberOfSeasons
+        self.numberOfEpisodes = numberOfEpisodes
+        self.episodeRunTime = episodeRunTime
+    }
+
+    public init(id: Int, name: String, overview: String?, posterPath: String?, firstAirDate: String?, voteAverage: Double?) {
+        self.init(id: id, name: name, overview: overview, posterPath: posterPath, backdropPath: nil, firstAirDate: firstAirDate, voteAverage: voteAverage, tagline: nil, homepage: nil, genres: nil, numberOfSeasons: nil, numberOfEpisodes: nil, episodeRunTime: nil)
+    }
 }
 
 public struct Person: Codable {
@@ -35,7 +90,47 @@ public struct Person: Codable {
     public let name: String
     public let character: String?
     public let profilePath: String?
+    public let biography: String?
+    public let birthday: String?
+    public let placeOfBirth: String?
+
+    public init(id: Int, name: String, character: String?, profilePath: String?, biography: String? = nil, birthday: String? = nil, placeOfBirth: String? = nil) {
+        self.id = id
+        self.name = name
+        self.character = character
+        self.profilePath = profilePath
+        self.biography = biography
+        self.birthday = birthday
+        self.placeOfBirth = placeOfBirth
+    }
+
+    public init(id: Int, name: String, character: String?, profilePath: String?) {
+        self.init(id: id, name: name, character: character, profilePath: profilePath, biography: nil, birthday: nil, placeOfBirth: nil)
+    }
 }
+
+public struct ImageInfo: Codable {
+    public let filePath: String
+    public let width: Int?
+    public let height: Int?
+}
+
+public struct VideoInfo: Codable {
+    public let name: String
+    public let key: String
+    public let site: String
+    public let type: String
+}
+
+public struct MediaImages: Codable {
+    public let posters: [ImageInfo]
+    public let backdrops: [ImageInfo]
+}
+
+public struct PersonImages: Codable {
+    public let profiles: [ImageInfo]
+}
+
 
 /// Known watch providers used by some helper methods.
 public enum WatchProvider: Int {
@@ -48,8 +143,24 @@ public enum WatchProvider: Int {
 /// Basic genres used to build default movie categories.
 public enum Genre: Int {
     case action = 28
+    case adventure = 12
+    case animation = 16
     case comedy = 35
+    case crime = 80
+    case documentary = 99
     case drama = 18
+    case family = 10751
+    case fantasy = 14
+    case history = 36
+    case horror = 27
+    case music = 10402
+    case mystery = 9648
+    case romance = 10749
+    case scienceFiction = 878
+    case tvMovie = 10770
+    case thriller = 53
+    case war = 10752
+    case western = 37
 }
 
 /// A dynamic list of movies belonging to a specific category.
@@ -83,6 +194,37 @@ public class MovieCategory {
     }
 }
 
+/// A dynamic list of TV shows belonging to a specific category.
+public class TVShowCategory {
+    public let id = UUID()
+    public let name: String
+    private let loader: (_ page: Int) async throws -> [TVShow]
+    private(set) public var page: Int = 0
+    public private(set) var items: [TVShow] = []
+
+    public init(name: String, loader: @escaping (_ page: Int) async throws -> [TVShow]) {
+        self.name = name
+        self.loader = loader
+    }
+
+    /// Reloads the first page of results, replacing current items.
+    @discardableResult
+    public func reload() async throws -> [TVShow] {
+        page = 1
+        items = try await loader(page)
+        return items
+    }
+
+    /// Fetches the next page and appends the results.
+    @discardableResult
+    public func loadNext() async throws -> [TVShow] {
+        page += 1
+        let more = try await loader(page)
+        items.append(contentsOf: more)
+        return more
+    }
+}
+
 public struct MovieDetails: Codable {
     public let movie: Movie
     public let cast: [Person]
@@ -103,6 +245,19 @@ struct SearchResponse<T: Codable>: Codable {
 
 struct TrendingResponse<T: Codable>: Codable {
     let results: [T]
+}
+
+struct ImagesResponse: Codable {
+    let backdrops: [ImageInfo]
+    let posters: [ImageInfo]
+}
+
+struct PersonImagesResponse: Codable {
+    let profiles: [ImageInfo]
+}
+
+struct VideosResponse: Codable {
+    let results: [VideoInfo]
 }
 
 public enum TMDBError: Error {
@@ -172,7 +327,8 @@ public class TMDBClient {
         case .movie:
             return try await trendingMovies(timeWindow: timeWindow, language: language, page: page)
         case .tv:
-            return try await trendingTVShows(timeWindow: timeWindow, language: language, page: page)
+            let shows = try await trendingTVShows(timeWindow: timeWindow, language: language, page: page)
+            return self.asMovies(shows)
         }
     }
 
@@ -183,13 +339,15 @@ public class TMDBClient {
         return response.results
     }
 
-    /// Trending TV shows mapped to ``Movie`` for convenience.
-    public func trendingTVShows(timeWindow: String = "week", language: String = "en", page: Int = 1) async throws -> [Movie] {
+    /// Trending TV shows for the given time window (`day` or `week`).
+    public func trendingTVShows(timeWindow: String = "week", language: String = "en", page: Int = 1) async throws -> [TVShow] {
         let endpoint = "trending/tv/\(timeWindow)"
         let response: TrendingResponse<TVShow> = try await request(endpoint: endpoint, queryItems: [URLQueryItem(name: "language", value: language), URLQueryItem(name: "page", value: String(page))], type: TrendingResponse<TVShow>.self)
-        return response.results.map {
-            Movie(id: $0.id, title: $0.name, overview: $0.overview, posterPath: $0.posterPath, releaseDate: $0.firstAirDate, voteAverage: $0.voteAverage)
-        }
+        return response.results
+    }
+
+    private func asMovies(_ shows: [TVShow]) -> [Movie] {
+        shows.map { Movie(id: $0.id, title: $0.name, overview: $0.overview, posterPath: $0.posterPath, releaseDate: $0.firstAirDate, voteAverage: $0.voteAverage) }
     }
 
     private func asMovies(_ shows: [TVShow]) -> [Movie] {
@@ -210,6 +368,32 @@ public class TMDBClient {
         let s = try await show
         let credits = try await creditsResp
         return TVShowDetails(show: s, cast: credits.cast)
+    }
+
+    public func personDetails(id: Int, language: String = "en") async throws -> Person {
+        try await request(endpoint: "person/\(id)", queryItems: [URLQueryItem(name: "language", value: language)], type: Person.self)
+    }
+
+    /// Fetches the episodes for a specific season of a TV show.
+    public func episodes(showId: Int, season: Int, language: String = "en") async throws -> [Episode] {
+        struct SeasonResponse: Codable { let episodes: [Episode] }
+        let response: SeasonResponse = try await request(
+            endpoint: "tv/\(showId)/season/\(season)",
+            queryItems: [URLQueryItem(name: "language", value: language)],
+            type: SeasonResponse.self
+        )
+        return response.episodes
+    }
+
+    /// Retrieves the number of seasons available for the given TV show.
+    public func numberOfSeasons(showId: Int, language: String = "en") async throws -> Int {
+        struct ShowInfo: Codable { let numberOfSeasons: Int }
+        let info: ShowInfo = try await request(
+            endpoint: "tv/\(showId)",
+            queryItems: [URLQueryItem(name: "language", value: language)],
+            type: ShowInfo.self
+        )
+        return info.numberOfSeasons
     }
 
     // MARK: Top/Popular
@@ -284,6 +468,48 @@ public class TMDBClient {
     public func imageURL(path: String, size: String = "w500") -> URL {
         imageBaseURL.appendingPathComponent(size).appendingPathComponent(path)
     }
+
+    public func movieImages(id: Int) async throws -> MediaImages {
+        let resp: ImagesResponse = try await request(endpoint: "movie/\(id)/images", type: ImagesResponse.self)
+        return MediaImages(posters: resp.posters, backdrops: resp.backdrops)
+    }
+
+    public func tvShowImages(id: Int) async throws -> MediaImages {
+        let resp: ImagesResponse = try await request(endpoint: "tv/\(id)/images", type: ImagesResponse.self)
+        return MediaImages(posters: resp.posters, backdrops: resp.backdrops)
+    }
+
+    public func personImages(id: Int) async throws -> [ImageInfo] {
+        let resp: PersonImagesResponse = try await request(endpoint: "person/\(id)/images", type: PersonImagesResponse.self)
+        return resp.profiles
+    }
+
+    // MARK: Videos
+    public func movieVideos(id: Int, language: String = "en") async throws -> [VideoInfo] {
+        let resp: VideosResponse = try await request(endpoint: "movie/\(id)/videos", queryItems: [URLQueryItem(name: "language", value: language)], type: VideosResponse.self)
+        return resp.results
+    }
+
+    public func tvShowVideos(id: Int, language: String = "en") async throws -> [VideoInfo] {
+        let resp: VideosResponse = try await request(endpoint: "tv/\(id)/videos", queryItems: [URLQueryItem(name: "language", value: language)], type: VideosResponse.self)
+        return resp.results
+    }
+
+    public func movieTrailerURL(id: Int, language: String = "en") async throws -> URL? {
+        let videos = try await movieVideos(id: id, language: language)
+        if let video = videos.first(where: { $0.site.lowercased() == "youtube" && $0.type.lowercased() == "trailer" }) {
+            return URL(string: "https://www.youtube.com/watch?v=\(video.key)")
+        }
+        return nil
+    }
+
+    public func tvShowTrailerURL(id: Int, language: String = "en") async throws -> URL? {
+        let videos = try await tvShowVideos(id: id, language: language)
+        if let video = videos.first(where: { $0.site.lowercased() == "youtube" && $0.type.lowercased() == "trailer" }) {
+            return URL(string: "https://www.youtube.com/watch?v=\(video.key)")
+        }
+        return nil
+    }
     
     // MARK: Discover
     public func discoverMovies(genre: Int? = nil, language: String = "en", page: Int = 1) async throws -> [Movie] {
@@ -309,11 +535,11 @@ public class TMDBClient {
             MovieCategory(name: "Top on Prime Video") { page in
                 try await self.topMovies(provider: .primeVideo, region: region, language: language, page: page)
             },
-            MovieCategory(name: "Action") { page in
-                try await self.discoverMovies(genre: Genre.action.rawValue, language: language, page: page)
+            MovieCategory(name: "Top on Disney+") { page in
+                try await self.topMovies(provider: .disneyPlus, region: region, language: language, page: page)
             },
-            MovieCategory(name: "Comedy") { page in
-                try await self.discoverMovies(genre: Genre.comedy.rawValue, language: language, page: page)
+            MovieCategory(name: "Top on Apple TV+") { page in
+                try await self.topMovies(provider: .appleTVPlus, region: region, language: language, page: page)
             }
         ]
     }
@@ -321,6 +547,115 @@ public class TMDBClient {
     /// Returns default categories and optionally preloads the first page of each one.
     public func defaultMovieCategories(region: String = "US", language: String = "en", preload: Bool) async throws -> [MovieCategory] {
         let categories = defaultMovieCategories(region: region, language: language)
+        if preload {
+            for category in categories {
+                try await category.reload()
+            }
+        }
+        return categories
+    }
+
+    /// Returns movie categories based on common genres.
+    public func genreMovieCategories(language: String = "en") -> [MovieCategory] {
+        [
+            MovieCategory(name: "Action") { page in
+                try await self.discoverMovies(genre: Genre.action.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Adventure") { page in
+                try await self.discoverMovies(genre: Genre.adventure.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Animation") { page in
+                try await self.discoverMovies(genre: Genre.animation.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Comedy") { page in
+                try await self.discoverMovies(genre: Genre.comedy.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Crime") { page in
+                try await self.discoverMovies(genre: Genre.crime.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Documentary") { page in
+                try await self.discoverMovies(genre: Genre.documentary.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Drama") { page in
+                try await self.discoverMovies(genre: Genre.drama.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Family") { page in
+                try await self.discoverMovies(genre: Genre.family.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Fantasy") { page in
+                try await self.discoverMovies(genre: Genre.fantasy.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "History") { page in
+                try await self.discoverMovies(genre: Genre.history.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Horror") { page in
+                try await self.discoverMovies(genre: Genre.horror.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Music") { page in
+                try await self.discoverMovies(genre: Genre.music.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Mystery") { page in
+                try await self.discoverMovies(genre: Genre.mystery.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Romance") { page in
+                try await self.discoverMovies(genre: Genre.romance.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Sci-Fi") { page in
+                try await self.discoverMovies(genre: Genre.scienceFiction.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "TV Movie") { page in
+                try await self.discoverMovies(genre: Genre.tvMovie.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Thriller") { page in
+                try await self.discoverMovies(genre: Genre.thriller.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "War") { page in
+                try await self.discoverMovies(genre: Genre.war.rawValue, language: language, page: page)
+            },
+            MovieCategory(name: "Western") { page in
+                try await self.discoverMovies(genre: Genre.western.rawValue, language: language, page: page)
+            }
+        ]
+    }
+
+    /// Returns genre categories and optionally preloads the first page of each one.
+    public func genreMovieCategories(language: String = "en", preload: Bool) async throws -> [MovieCategory] {
+        let categories = genreMovieCategories(language: language)
+        if preload {
+            for category in categories {
+                try await category.reload()
+            }
+        }
+        return categories
+    }
+
+    /// Convenience method returning a set of common TV show categories.
+    public func defaultTVShowCategories(region: String = "US", language: String = "en") -> [TVShowCategory] {
+        [
+            TVShowCategory(name: "Trending") { page in
+                try await self.trendingTVShows(language: language, page: page)
+            },
+            TVShowCategory(name: "Top Rated") { page in
+                try await self.topRatedTVShows(language: language, page: page)
+            },
+            TVShowCategory(name: "Top on Netflix") { page in
+                try await self.topTVShows(provider: .netflix, region: region, language: language, page: page)
+            },
+            TVShowCategory(name: "Top on Prime Video") { page in
+                try await self.topTVShows(provider: .primeVideo, region: region, language: language, page: page)
+            },
+            TVShowCategory(name: "Top on Disney+") { page in
+                try await self.topTVShows(provider: .disneyPlus, region: region, language: language, page: page)
+            },
+            TVShowCategory(name: "Top on Apple TV+") { page in
+                try await self.topTVShows(provider: .appleTVPlus, region: region, language: language, page: page)
+            }
+        ]
+    }
+
+    /// Returns default TV show categories and optionally preloads the first page of each one.
+    public func defaultTVShowCategories(region: String = "US", language: String = "en", preload: Bool) async throws -> [TVShowCategory] {
+        let categories = defaultTVShowCategories(region: region, language: language)
         if preload {
             for category in categories {
                 try await category.reload()

@@ -3,6 +3,7 @@
 //  YoddWatchLibraryTests
 //
 
+import Foundation
 import Testing
 @testable import YoddWatchLibrary
 
@@ -57,4 +58,83 @@ struct YoddWatchLibraryTests {
         let categories = try await client.defaultTVShowCategories(preload: false)
         #expect(!categories.isEmpty)
     }
+
+    @Test func decodeEpisode() throws {
+        let json = """
+        {
+            "id": 1,
+            "name": "Pilot",
+            "overview": "Intro",
+            "still_path": "/img.jpg",
+            "season_number": 1,
+            "episode_number": 1,
+            "air_date": "2022-01-01",
+            "vote_average": 7.5
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let episode = try decoder.decode(Episode.self, from: json)
+        #expect(episode.id == 1)
+        #expect(episode.seasonNumber == 1)
+        #expect(episode.episodeNumber == 1)
+    }
+
+    @Test func decodeMovieDetails() throws {
+        let json = """
+        {
+            "id": 10,
+            "title": "Example",
+            "overview": "Test",
+            "poster_path": "/p.jpg",
+            "backdrop_path": "/b.jpg",
+            "release_date": "2024-01-01",
+            "vote_average": 8.0,
+            "runtime": 120,
+            "tagline": "Tag",
+            "homepage": "https://example.com",
+            "genres": [{"id": 1, "name": "Drama"}]
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let movie = try decoder.decode(Movie.self, from: json)
+        #expect(movie.id == 10)
+        #expect(movie.runtime == 120)
+        #expect(movie.genres?.first?.name == "Drama")
+    }
+
+    @Test func decodeVideoInfo() throws {
+        let json = """
+        {
+            "name": "Trailer",
+            "key": "abc",
+            "site": "YouTube",
+            "type": "Trailer"
+        }
+        """.data(using: .utf8)!
+        let video = try JSONDecoder().decode(VideoInfo.self, from: json)
+        #expect(video.key == "abc")
+    }
+
+    @Test func decodePersonDetails() throws {
+        let json = """
+        {
+            "id": 1,
+            "name": "Actor",
+            "character": "Role",
+            "profile_path": "/p.jpg",
+            "biography": "An actor",
+            "birthday": "1970-01-01",
+            "place_of_birth": "Somewhere"
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let person = try decoder.decode(Person.self, from: json)
+        #expect(person.biography == "An actor")
+        #expect(person.birthday == "1970-01-01")
+        #expect(person.placeOfBirth == "Somewhere")
+    }
+
 }
