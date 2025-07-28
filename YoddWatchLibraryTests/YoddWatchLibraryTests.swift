@@ -137,4 +137,20 @@ struct YoddWatchLibraryTests {
         #expect(person.placeOfBirth == "Somewhere")
     }
 
+    @Test func decodeMediaImages() throws {
+        let json = """
+        {
+            "posters": [{"file_path": "/p.jpg", "width": 500, "height": 750}],
+            "backdrops": [{"file_path": "/b.jpg", "width": 1280, "height": 720}],
+            "logos": [{"file_path": "/l.png", "width": 200, "height": 100}]
+        }
+        """.data(using: .utf8)!
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let images = try decoder.decode(MediaImages.self, from: json)
+        #expect(images.logos.first?.filePath == "/l.png")
+        #expect(images.posters.count == 1)
+        #expect(images.backdrops.count == 1)
+    }
+
 }
