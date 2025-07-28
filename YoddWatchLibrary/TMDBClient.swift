@@ -125,6 +125,7 @@ public struct VideoInfo: Codable {
 public struct MediaImages: Codable {
     public let posters: [ImageInfo]
     public let backdrops: [ImageInfo]
+    public let logos: [ImageInfo]
 }
 
 public struct PersonImages: Codable {
@@ -277,6 +278,7 @@ struct TrendingResponse<T: Codable>: Codable {
 struct ImagesResponse: Codable {
     let backdrops: [ImageInfo]
     let posters: [ImageInfo]
+    let logos: [ImageInfo]?
 }
 
 struct PersonImagesResponse: Codable {
@@ -526,12 +528,12 @@ public class TMDBClient {
 
     public func movieImages(id: Int) async throws -> MediaImages {
         let resp: ImagesResponse = try await request(endpoint: "movie/\(id)/images", type: ImagesResponse.self)
-        return MediaImages(posters: resp.posters, backdrops: resp.backdrops)
+        return MediaImages(posters: resp.posters, backdrops: resp.backdrops, logos: resp.logos ?? [])
     }
 
     public func tvShowImages(id: Int) async throws -> MediaImages {
         let resp: ImagesResponse = try await request(endpoint: "tv/\(id)/images", type: ImagesResponse.self)
-        return MediaImages(posters: resp.posters, backdrops: resp.backdrops)
+        return MediaImages(posters: resp.posters, backdrops: resp.backdrops, logos: resp.logos ?? [])
     }
 
     public func personImages(id: Int) async throws -> [ImageInfo] {
