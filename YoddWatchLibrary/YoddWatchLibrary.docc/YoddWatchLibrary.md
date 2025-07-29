@@ -24,8 +24,8 @@ A lightweight framework providing access to The Movie Database API and basic use
 - ``Episode``
 - ``TMDBClient.episodes(showId:season:language:)``
 - ``TMDBClient.numberOfSeasons(showId:language:)``
-- ``TMDBClient.movieImages(id:)``
-- ``TMDBClient.tvShowImages(id:)``
+ - ``TMDBClient.movieImages(id:language:)``
+ - ``TMDBClient.tvShowImages(id:language:)``
 - ``TMDBClient.personImages(id:)``
 - ``TMDBClient.movieTrailerURL(id:language:)``
 - ``TMDBClient.tvShowTrailerURL(id:language:)``

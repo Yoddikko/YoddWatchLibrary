@@ -93,7 +93,11 @@ struct YoddWatchLibraryTests {
             "runtime": 120,
             "tagline": "Tag",
             "homepage": "https://example.com",
-            "genres": [{"id": 1, "name": "Drama"}]
+            "genres": [{"id": 1, "name": "Drama"}],
+            "status": "Released",
+            "budget": 1000000,
+            "revenue": 5000000,
+            "imdb_id": "tt1234567"
         }
         """.data(using: .utf8)!
         let decoder = JSONDecoder()
@@ -102,6 +106,9 @@ struct YoddWatchLibraryTests {
         #expect(movie.id == 10)
         #expect(movie.runtime == 120)
         #expect(movie.genres?.first?.name == "Drama")
+        #expect(movie.status == "Released")
+        #expect(movie.budget == 1000000)
+        #expect(movie.imdbId == "tt1234567")
     }
 
     @Test func decodeVideoInfo() throws {
@@ -110,11 +117,18 @@ struct YoddWatchLibraryTests {
             "name": "Trailer",
             "key": "abc",
             "site": "YouTube",
-            "type": "Trailer"
+            "type": "Trailer",
+            "size": 1080,
+            "official": true,
+            "published_at": "2024-01-01",
+            "id": "v1"
         }
         """.data(using: .utf8)!
         let video = try JSONDecoder().decode(VideoInfo.self, from: json)
         #expect(video.key == "abc")
+        #expect(video.size == 1080)
+        #expect(video.official == true)
+        #expect(video.id == "v1")
     }
 
     @Test func decodePersonDetails() throws {
@@ -140,15 +154,16 @@ struct YoddWatchLibraryTests {
     @Test func decodeMediaImages() throws {
         let json = """
         {
-            "posters": [{"file_path": "/p.jpg", "width": 500, "height": 750}],
-            "backdrops": [{"file_path": "/b.jpg", "width": 1280, "height": 720}],
-            "logos": [{"file_path": "/l.png", "width": 200, "height": 100}]
+            "posters": [{"file_path": "/p.jpg", "width": 500, "height": 750, "iso_639_1": "en", "aspect_ratio": 0.7}],
+            "backdrops": [{"file_path": "/b.jpg", "width": 1280, "height": 720, "iso_639_1": "en", "aspect_ratio": 1.77}],
+            "logos": [{"file_path": "/l.png", "width": 200, "height": 100, "iso_639_1": "en", "aspect_ratio": 2.0}]
         }
         """.data(using: .utf8)!
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         let images = try decoder.decode(MediaImages.self, from: json)
         #expect(images.logos.first?.filePath == "/l.png")
+        #expect(images.logos.first?.iso6391 == "en")
         #expect(images.posters.count == 1)
         #expect(images.backdrops.count == 1)
     }

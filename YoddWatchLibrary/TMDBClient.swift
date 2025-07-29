@@ -29,8 +29,12 @@ public struct Movie: Codable {
     public let tagline: String?
     public let homepage: String?
     public let genres: [GenreInfo]?
+    public let status: String?
+    public let budget: Int?
+    public let revenue: Int?
+    public let imdbId: String?
 
-    public init(id: Int, title: String, overview: String?, posterPath: String?, backdropPath: String? = nil, releaseDate: String?, voteAverage: Double?, runtime: Int? = nil, tagline: String? = nil, homepage: String? = nil, genres: [GenreInfo]? = nil) {
+    public init(id: Int, title: String, overview: String?, posterPath: String?, backdropPath: String? = nil, releaseDate: String?, voteAverage: Double?, runtime: Int? = nil, tagline: String? = nil, homepage: String? = nil, genres: [GenreInfo]? = nil, status: String? = nil, budget: Int? = nil, revenue: Int? = nil, imdbId: String? = nil) {
         self.id = id
         self.title = title
         self.overview = overview
@@ -42,10 +46,14 @@ public struct Movie: Codable {
         self.tagline = tagline
         self.homepage = homepage
         self.genres = genres
+        self.status = status
+        self.budget = budget
+        self.revenue = revenue
+        self.imdbId = imdbId
     }
 
     public init(id: Int, title: String, overview: String?, posterPath: String?, releaseDate: String?, voteAverage: Double?) {
-        self.init(id: id, title: title, overview: overview, posterPath: posterPath, backdropPath: nil, releaseDate: releaseDate, voteAverage: voteAverage, runtime: nil, tagline: nil, homepage: nil, genres: nil)
+        self.init(id: id, title: title, overview: overview, posterPath: posterPath, backdropPath: nil, releaseDate: releaseDate, voteAverage: voteAverage, runtime: nil, tagline: nil, homepage: nil, genres: nil, status: nil, budget: nil, revenue: nil, imdbId: nil)
     }
 }
 
@@ -63,8 +71,11 @@ public struct TVShow: Codable {
     public let numberOfSeasons: Int?
     public let numberOfEpisodes: Int?
     public let episodeRunTime: [Int]?
+    public let status: String?
+    public let inProduction: Bool?
+    public let originCountry: [String]?
 
-    public init(id: Int, name: String, overview: String?, posterPath: String?, backdropPath: String? = nil, firstAirDate: String?, voteAverage: Double?, tagline: String? = nil, homepage: String? = nil, genres: [GenreInfo]? = nil, numberOfSeasons: Int? = nil, numberOfEpisodes: Int? = nil, episodeRunTime: [Int]? = nil) {
+    public init(id: Int, name: String, overview: String?, posterPath: String?, backdropPath: String? = nil, firstAirDate: String?, voteAverage: Double?, tagline: String? = nil, homepage: String? = nil, genres: [GenreInfo]? = nil, numberOfSeasons: Int? = nil, numberOfEpisodes: Int? = nil, episodeRunTime: [Int]? = nil, status: String? = nil, inProduction: Bool? = nil, originCountry: [String]? = nil) {
         self.id = id
         self.name = name
         self.overview = overview
@@ -78,10 +89,13 @@ public struct TVShow: Codable {
         self.numberOfSeasons = numberOfSeasons
         self.numberOfEpisodes = numberOfEpisodes
         self.episodeRunTime = episodeRunTime
+        self.status = status
+        self.inProduction = inProduction
+        self.originCountry = originCountry
     }
 
     public init(id: Int, name: String, overview: String?, posterPath: String?, firstAirDate: String?, voteAverage: Double?) {
-        self.init(id: id, name: name, overview: overview, posterPath: posterPath, backdropPath: nil, firstAirDate: firstAirDate, voteAverage: voteAverage, tagline: nil, homepage: nil, genres: nil, numberOfSeasons: nil, numberOfEpisodes: nil, episodeRunTime: nil)
+        self.init(id: id, name: name, overview: overview, posterPath: posterPath, backdropPath: nil, firstAirDate: firstAirDate, voteAverage: voteAverage, tagline: nil, homepage: nil, genres: nil, numberOfSeasons: nil, numberOfEpisodes: nil, episodeRunTime: nil, status: nil, inProduction: nil, originCountry: nil)
     }
 }
 
@@ -113,6 +127,8 @@ public struct ImageInfo: Codable {
     public let filePath: String
     public let width: Int?
     public let height: Int?
+    public let iso6391: String?
+    public let aspectRatio: Double?
 }
 
 public struct VideoInfo: Codable {
@@ -120,6 +136,10 @@ public struct VideoInfo: Codable {
     public let key: String
     public let site: String
     public let type: String
+    public let size: Int?
+    public let official: Bool?
+    public let publishedAt: String?
+    public let id: String?
 }
 
 public struct MediaImages: Codable {
@@ -526,13 +546,19 @@ public class TMDBClient {
         imageBaseURL.appendingPathComponent(size).appendingPathComponent(path)
     }
 
-    public func movieImages(id: Int) async throws -> MediaImages {
-        let resp: ImagesResponse = try await request(endpoint: "movie/\(id)/images", type: ImagesResponse.self)
+    public func movieImages(id: Int, language: String = "en") async throws -> MediaImages {
+        let resp: ImagesResponse = try await request(
+            endpoint: "movie/\(id)/images",
+            queryItems: [URLQueryItem(name: "include_image_language", value: "\(language),null")],
+            type: ImagesResponse.self)
         return MediaImages(posters: resp.posters, backdrops: resp.backdrops, logos: resp.logos ?? [])
     }
 
-    public func tvShowImages(id: Int) async throws -> MediaImages {
-        let resp: ImagesResponse = try await request(endpoint: "tv/\(id)/images", type: ImagesResponse.self)
+    public func tvShowImages(id: Int, language: String = "en") async throws -> MediaImages {
+        let resp: ImagesResponse = try await request(
+            endpoint: "tv/\(id)/images",
+            queryItems: [URLQueryItem(name: "include_image_language", value: "\(language),null")],
+            type: ImagesResponse.self)
         return MediaImages(posters: resp.posters, backdrops: resp.backdrops, logos: resp.logos ?? [])
     }
 
